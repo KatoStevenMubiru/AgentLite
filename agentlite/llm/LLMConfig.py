@@ -13,6 +13,12 @@ class LLMConfig:
         self.max_tokens = 256
         self.end_of_prompt = ""
         self.api_key: str = os.environ.get("OPENAI_API_KEY", "EMPTY")
-        self.base_url = None
+
+        # Unify-specific settings
+        self.base_url = None # Set conditionally based on provider
         self.provider = None
+        self.use_custom_keys = False
+        self.tags = []
+
+        # Update from config_dict
         self.__dict__.update(config_dict)
