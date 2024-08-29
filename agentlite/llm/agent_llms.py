@@ -1,9 +1,8 @@
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from openai import OpenAI
-import unify
-from agentlite.llm.LLMConfig import LLMConfig
 
+from agentlite.llm.LLMConfig import LLMConfig
 
 OPENAI_CHAT_MODELS = [
     "gpt-3.5-turbo",
@@ -91,39 +90,6 @@ class LangchainChatModel(BaseLLM):
     def run(self, prompt: str):
         return self.llm_chain.run(prompt)
 
-#adding unify base class
-class UnifyLLM(BaseLLM):
-    def __init__(self, llm_config: LLMConfig):
-        super().__init__(llm_config)
-        self.client = unify.Unify(api_key=llm_config.api_key)
-        
-    def run(self, prompt: str):
-        response = self.client.generate(prompt, 
-                                        model=self.llm_name,
-                                        max_tokens=self.max_tokens,
-                                        temperature=self.temperature,
-                                        stop=self.stop)
-        return response.text
-
-def get_llm_backend(llm_config: LLMConfig):
-    llm_name = llm_config.llm_name
-    if '@' in llm_name:  # Unify format: model@provider
-        return UnifyLLM(llm_config)
-    elif llm_name in OPENAI_CHAT_MODELS:
-        return LangchainChatModel(llm_config)
-    elif llm_name in OPENAI_LLM_MODELS:
-        return LangchainLLM(llm_config)
-    else:
-        return LangchainLLM(llm_config)
-
-def list_unify_models():
-    return unify.utils.list_models()
-
-def list_unify_providers():
-    return unify.utils.list_providers()
-
-def list_unify_endpoints():
-    return unify.utils.list_endpoints()
 
 # class LangchainOllamaLLM(BaseLLM):
 #     def __init__(self, llm_config: LLMConfig):
