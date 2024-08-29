@@ -9,6 +9,7 @@ from agentlite.commons import AgentAct, TaskPackage
 from agentlite.llm.agent_llms import BaseLLM, get_llm_backend
 from agentlite.llm.LLMConfig import LLMConfig
 from agentlite.logging.terminal_logger import AgentLogger
+import os
 
 # set PROMPT_DEBUG_FLAG to True to see the debug info
 agent_logger = AgentLogger(PROMPT_DEBUG_FLAG=False)
@@ -98,11 +99,17 @@ class DuckSearchAgent(BaseAgent):
 
 
 def test_search_agent():
-    llm_config_dict = {"llm_name": "gpt-3.5-turbo-16k-0613", "temperature": 0.1}
+    # Update LLM Configuration for UnifyAI
+    llm_config_dict = {
+        "llm_name": "llama-2-70b-chat@together",  # Or another UnifyAI model@provider
+        "provider": "unify", 
+        "temperature": 0.1,
+        "api_key": os.environ.get("UNIFY_KEY") 
+    }
     actions = [WikipediaSearch()]
     llm_config = LLMConfig(llm_config_dict)
-    # print(llm_config.__dict__)
     llm = get_llm_backend(llm_config)
+
     ## test the one-shot wikipedia search agent
     labor_agent = WikiSearchAgent(llm=llm)
     # labor_agent = DuckSearchAgent(llm=llm)
