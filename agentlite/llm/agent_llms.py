@@ -1,7 +1,7 @@
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from openai import OpenAI
-import unify
+
 from agentlite.llm.LLMConfig import LLMConfig
 
 OPENAI_CHAT_MODELS = [
@@ -89,14 +89,21 @@ class LangchainChatModel(BaseLLM):
 
     def run(self, prompt: str):
         return self.llm_chain.run(prompt)
-    
-# Add UnifyLLM class
 class UnifyLLM(BaseLLM):
     """LLM class for interacting with UnifyAI."""
 
     def __init__(self, llm_config: LLMConfig):
         super().__init__(llm_config)
         self.client = unify.Unify(api_key=llm_config.api_key)
+
+        # Extract model and provider from self.llm_name
+        parts = self.llm_name.split("@", 1)
+        if len(parts) == 2:
+            self.model, self.provider = parts
+        else:
+            raise ValueError(
+                "UnifyLLM: Invalid model format. Expected 'model@provider'."
+            )
 
     def run(self, prompt: str):
         """
@@ -110,13 +117,12 @@ class UnifyLLM(BaseLLM):
         """
         response = self.client.generate(
             prompt,
-            model=self.llm_name,
+            model=f"{self.model}@{self.provider}",  # Use extracted model and provider
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             stop=self.stop,
         )
-        return response.text 
-
+        return response.text
 
 # class LangchainOllamaLLM(BaseLLM):
 #     def __init__(self, llm_config: LLMConfig):
@@ -137,33 +143,10 @@ class UnifyLLM(BaseLLM):
 #     def run(self, prompt: str):
 #         return self.llm_chain.run(prompt)
 
-# Modify get_llm_backend() to include UnifyAI
 def get_llm_backend(llm_config: LLMConfig):
-    """
-    Gets the appropriate LLM backend class based on the configuration.
-
-    Args:
-        llm_config: The LLM configuration object.
-
-    Returns:
-        An instance of the appropriate LLM backend class.
-    """
-
     llm_name = llm_config.llm_name
     llm_provider = llm_config.provider
-
-    # Check for UnifyAI provider first
-    if llm_provider == "unify": 
-        llm_config.base_url = "https://api.unify.ai/v0/" # Set base_url for Unify
-        return UnifyLLM(llm_config)
-
-    # Check for Unify's model@provider format as a fallback
-    elif "@" in llm_name:  
-        llm_config.base_url = "https://api.unify.ai/v0/"  # Set base_url for Unify
-        return UnifyLLM(llm_config)
-
-    # Handle OpenAI models
-    elif llm_name in OPENAI_CHAT_MODELS:
+    if llm_name in OPENAI_CHAT_MODELS:
         return LangchainChatModel(llm_config)
     elif llm_name in OPENAI_LLM_MODELS:
         return LangchainLLM(llm_config)
