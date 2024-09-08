@@ -12,7 +12,7 @@ from agentlite.logging.terminal_logger import AgentLogger
 import os
 
 # set PROMPT_DEBUG_FLAG to True to see the debug info
-agent_logger = AgentLogger(PROMPT_DEBUG_FLAG=False)
+agent_logger = AgentLogger(PROMPT_DEBUG_FLAG=True)
 
 
 class SearchAgent(BaseAgent):
