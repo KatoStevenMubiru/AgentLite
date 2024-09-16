@@ -1,7 +1,7 @@
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from openai import OpenAI
-
+import unify  # Import unify for UnifyLLM
 from agentlite.llm.LLMConfig import LLMConfig
 
 OPENAI_CHAT_MODELS = [
@@ -89,6 +89,8 @@ class LangchainChatModel(BaseLLM):
 
     def run(self, prompt: str):
         return self.llm_chain.run(prompt)
+
+
 class UnifyLLM(BaseLLM):
     """LLM class for interacting with UnifyAI."""
 
@@ -117,41 +119,28 @@ class UnifyLLM(BaseLLM):
         """
         response = self.client.generate(
             prompt,
-            model=f"{self.model}@{self.provider}",  # Use extracted model and provider
+            model=f"{self.model}@{self.provider}",
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             stop=self.stop,
         )
         return response.text
 
-# class LangchainOllamaLLM(BaseLLM):
-#     def __init__(self, llm_config: LLMConfig):
-#         from langchain_community.llms import Ollama
-
-#         super().__init__(llm_config)
-#         llm = Ollama(
-#             model=self.llm_name,
-#             temperature=self.temperature,
-#             num_predict=self.max_tokens,
-#             base_url=llm_config.base_url
-#             # api_key=llm_config.api_key,
-#         )
-#         human_template = "{prompt}"
-#         prompt = PromptTemplate(template=human_template, input_variables=["prompt"])
-#         self.llm_chain = LLMChain(prompt=prompt, llm=llm)
-
-#     def run(self, prompt: str):
-#         return self.llm_chain.run(prompt)
 
 def get_llm_backend(llm_config: LLMConfig):
     llm_name = llm_config.llm_name
-    llm_provider = llm_config.provider
+
+    # Check if the model name is in the format 'model@provider'
+    if '@' in llm_name:
+        model, provider = llm_name.split('@', 1)
+        llm_config.provider = provider
+        if provider == "unify":
+            return UnifyLLM(llm_config)
+
+    # Fallback to existing behavior
     if llm_name in OPENAI_CHAT_MODELS:
         return LangchainChatModel(llm_config)
     elif llm_name in OPENAI_LLM_MODELS:
         return LangchainLLM(llm_config)
     else:
         return LangchainLLM(llm_config)
-    # TODO: add more llm providers and inference APIs but for now we are using langchainLLM as the default
-    # Using other LLM providers will require additional setup and configuration
-    # We suggest subclass BaseLLM and implement the run method for the specific provider in your own best practices
