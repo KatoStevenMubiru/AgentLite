@@ -143,4 +143,6 @@ def get_llm_backend(llm_config: LLMConfig):
     elif llm_name in OPENAI_LLM_MODELS:
         return LangchainLLM(llm_config)
     else:
-        return LangchainLLM(llm_config)
+        # Raise an error if the model is unsupported
+        raise ValueError(f"Unsupported model name: {llm_name}")
+
